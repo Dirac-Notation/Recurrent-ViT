@@ -190,3 +190,5 @@ for i in tqdm(range(100)):
   h2 = tuple(t.detach() for t in h2)
   h3 = tuple(t.detach() for t in h3)
   h4 = tuple(t.detach() for t in h4)
+
+print("test")
