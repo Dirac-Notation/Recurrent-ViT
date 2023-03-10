@@ -133,7 +133,7 @@ class LDAttentionBlock(nn.Module):
     return x, hidden
 
 class Modules(nn.Module):
-  def __init__(self, input_map, kernel_size, local_patch_num, channel_size, num_head, num_iter):
+  def __init__(self, input_map, kernel_size, local_patch_num, channel_size, num_head):
     super().__init__()
 
     self.local_patch_num = local_patch_num
@@ -163,22 +163,29 @@ def Window_reverse(x, global_patch_num_x, local_patch_num):
 
   return x
 
+input_map = (1,256,256)
+kernel_size = 2
+local_patch_num = 4
+channel_size = 128
+num_head = 2
+batch_size = 10
+
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
-test = Modules((1,256,256), 2, 4, 128, 2, 4)
+test = Modules(input_map, kernel_size, local_patch_num, channel_size, num_head)
 test.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(test.parameters(), 0.01)
 
-h1 = tuple(torch.empty((1,128,1,1)).to(device, dtype = torch.float32) for _ in range(2))
-h2 = tuple(torch.empty((1,128,1,1)).to(device, dtype = torch.float32) for _ in range(2))
-h3 = tuple(torch.empty((1,128,1,1)).to(device, dtype = torch.float32) for _ in range(2))
-h4 = tuple(torch.empty((1,128,1,1)).to(device, dtype = torch.float32) for _ in range(2))
+h1 = tuple(torch.empty((1,channel_size,1,1)).to(device, dtype = torch.float32) for _ in range(2))
+h2 = tuple(torch.empty((1,channel_size,1,1)).to(device, dtype = torch.float32) for _ in range(2))
+h3 = tuple(torch.empty((1,channel_size,1,1)).to(device, dtype = torch.float32) for _ in range(2))
+h4 = tuple(torch.empty((1,channel_size,1,1)).to(device, dtype = torch.float32) for _ in range(2))
 
-for i in tqdm(range(100)):
-  x = torch.randn(10,1,256,256)
-  y = torch.randn(10,128,8,8)
+for i in tqdm(range(10)):
+  x = torch.randn(batch_size, *input_map)
+  y = torch.randn(batch_size, channel_size, 8, 8)
   x, y = x.to(device, dtype = torch.float32), y.to(device, dtype = torch.float32)
 
   yhat, h1, h2, h3, h4 = test(x, h1, h2, h3, h4)
@@ -190,5 +197,3 @@ for i in tqdm(range(100)):
   h2 = tuple(t.detach() for t in h2)
   h3 = tuple(t.detach() for t in h3)
   h4 = tuple(t.detach() for t in h4)
-
-print("test")
